@@ -1,94 +1,95 @@
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class Server {
-    private final int port;
-    private final ExecutorService threadPool = Executors.newFixedThreadPool(64);
+    //private final int port;
+    private final ExecutorService threadPool;
+    private final Map<String, Map<String, Handler>> handlers;
 
-    public Server(int port) {
-        this.port = port;
+    public Server() {
+        //this.port = 9999;
+        this.threadPool = Executors.newFixedThreadPool(64);
+        this.handlers = new ConcurrentHashMap<>();
     }
 
-    public void start() {
+    public Server(int port, int threadPool) {
+        //this.port = port;
+        this.threadPool = Executors.newFixedThreadPool(threadPool);
+        this.handlers = new ConcurrentHashMap<>();
+    }
+
+    public void addHandler(String method, String path, Handler handler) {
+        handlers.computeIfAbsent(method, k -> new ConcurrentHashMap<>())
+                .put(path, handler);
+    }
+
+    public void listen(int port) {
         try (ServerSocket serverSocket = new ServerSocket(port)) {
-            while (!Thread.currentThread().isInterrupted()) {
-                try {
-                    Socket socket = serverSocket.accept();
-                    threadPool.execute(() -> handleClient(socket));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
+            while (true) {
+                final Socket socket = serverSocket.accept();
+                threadPool.submit(() -> handleConnection(socket));
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            threadPool.shutdownNow();
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
 
-    private void handleClient(Socket socket) {
-        try (socket;
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
-             OutputStream out = socket.getOutputStream()) {
-
-            String requestLine = in.readLine();
-            if (requestLine == null || requestLine.isEmpty()) {
-                sendResponse(out, 400, "Bad Request", "Empty request");
+    void handleConnection(Socket socket) {
+        try (
+            socket;
+            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+        ) {
+            final var requestLine = in.readLine();
+            if (requestLine == null) {
                 return;
             }
 
-
-
-
-            String[] parts = requestLine.split(" ");
+            final var parts = requestLine.split(" ");
             if (parts.length != 3) {
-                sendResponse(out, 400, "Bad Request", "Malformed request line");
                 return;
             }
 
-            String method = parts[0];
-            String path = parts[1];
-            String version = parts[2];
+            final var method = parts[0];
+            final var path = parts [1];
 
-            if (!"GET".equals(method)) {
-                sendResponse(out, 405, "Method Not Allowed", "Only GET supported");
-                return;
+            Map<String, String> headers = new HashMap<>();
+            String line;
+
+            while(!(line = in.readLine()).isEmpty()) {
+                String[] header = line.split(": ", 2);
+                headers.put(header[0],header[1]);
             }
 
-            // Чтение заголовков
-            String header;
-            while ((header = in.readLine()) != null && !header.isEmpty()) {
-                // Можно обработать заголовки если нужно
+            Request request = new Request(method, path, headers, socket.getInputStream());
+
+            Handler handler = handlers
+                    .getOrDefault(method, Map.of())
+                    .get(path);
+
+            if (handler == null) {
+                out.write((
+                        "HTTP/1.1 404 Not Found\r\n" +
+                                "Content-Length: 0\r\n" +
+                                "Connection: close\r\n" +
+                                "\r\n"
+                        ).getBytes());
+                out.flush();
             }
 
-            String body = "<h1>Server is working!</h1>";
-            sendResponse(out, 200, "OK", body);
+            Response response = new Response(out);
+            handler.handle(request, response);
 
-        } catch (IOException e) {
-            e.printStackTrace();
+            out.flush();
+
+        } catch (Exception exception) {
+            exception.printStackTrace();
         }
     }
-
-    private void sendResponse(OutputStream out, int statusCode, String statusText, String body) throws IOException {
-        byte[] bodyBytes = body.getBytes(StandardCharsets.UTF_8);
-        String response =
-                "HTTP/1.1 " + statusCode + " " + statusText + "\r\n" +
-                        "Content-Type: text/html; charset=utf-8\r\n" +
-                        "Content-Length: " + bodyBytes.length + "\r\n" +
-                        "\r\n";
-        out.write(response.getBytes(StandardCharsets.UTF_8));
-        out.write(bodyBytes);
-        out.flush();
-    }
-
-    public static void main(String[] args) {
-        new Server(9999).start();
-    }
-
-
-
 }
