@@ -18,11 +18,11 @@ public class Response {
 
     public void send(byte[] body, String contentType) throws IOException {
         out.write((
-            "HTTP/1.1 200 OK \r\n" +
-                    "Content-Type: " + contentType + "\r\n" +
-                    "Content-Length: " + body.length + "\r\n" +
-                    "Connection: close\r\n" +
-                    "\r\n"
+                "HTTP/1.1 200 OK \r\n" +
+                        "Content-Type: " + contentType + "\r\n" +
+                        "Content-Length: " + body.length + "\r\n" +
+                        "Connection: close\r\n" +
+                        "\r\n"
         ).getBytes());
         out.write(body);
         out.flush();

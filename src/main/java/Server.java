@@ -42,9 +42,9 @@ public class Server {
 
     void handleConnection(Socket socket) {
         try (
-            socket;
-            BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
+                socket;
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedOutputStream out = new BufferedOutputStream(socket.getOutputStream());
         ) {
             final var requestLine = in.readLine();
             if (requestLine == null) {
@@ -57,14 +57,14 @@ public class Server {
             }
 
             final var method = parts[0];
-            final var path = parts [1];
+            final var path = parts[1];
 
             Map<String, String> headers = new HashMap<>();
             String line;
 
-            while(!(line = in.readLine()).isEmpty()) {
+            while (!(line = in.readLine()).isEmpty()) {
                 String[] header = line.split(": ", 2);
-                headers.put(header[0],header[1]);
+                headers.put(header[0], header[1]);
             }
 
             Request request = new Request(method, path, headers, socket.getInputStream());
@@ -79,7 +79,7 @@ public class Server {
                                 "Content-Length: 0\r\n" +
                                 "Connection: close\r\n" +
                                 "\r\n"
-                        ).getBytes());
+                ).getBytes());
                 out.flush();
             }
 
