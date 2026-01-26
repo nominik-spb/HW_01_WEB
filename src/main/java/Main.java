@@ -1,5 +1,3 @@
-import java.io.*;
-
 public class Main {
     public static void main(String[] args) {
 
@@ -8,7 +6,13 @@ public class Main {
         server.addHandler(
                 "GET",
                 "/messages",
-                (request, response) -> response.send("Hello from /messages")
+                (request, response) -> response.send("Hello from GET/messages")
+        );
+
+        server.addHandler(
+                "POST",
+                "/messages",
+                (request, response) -> response.send("Hello from POST/messages")
         );
 
         server.listen(9999);
