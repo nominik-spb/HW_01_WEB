@@ -9,11 +9,11 @@ public class Main {
                 (request, response) -> response.send("Hello from GET/messages")
         );
 
-        server.addHandler(
-                "POST",
-                "/messages",
-                (request, response) -> response.send("Hello from POST/messages")
-        );
+//        server.addHandler(
+//                "POST",
+//                "/messages",
+//                (request, response) -> response.send("Hello from POST/messages")
+//        );
 
         server.listen(9999);
     }
