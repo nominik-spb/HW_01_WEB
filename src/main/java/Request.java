@@ -32,7 +32,7 @@ public class Request {
         return method;
     }
 
-    //Возвращаем только пкть без параметров
+    //Возвращаем только путь без параметров
     public String getPath() {
         return URI.create(fullPath).getPath();
     }
@@ -41,8 +41,8 @@ public class Request {
         return URLEncodedUtils.parse(URI.create(fullPath), Charset.defaultCharset());
     }
 
-    public List<NameValuePair> getQueryParam(String name) {
-        return getQueryParams().;
-        return URLEncodedUtils.parse(URI.create(fullPath), Charset.defaultCharset());
-    }
+//    public List<NameValuePair> getQueryParam(String name) {
+//        return getQueryParams().;
+//        return URLEncodedUtils.parse(URI.create(fullPath), Charset.defaultCharset());
+//    }
 }
