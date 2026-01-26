@@ -1,16 +1,22 @@
+import org.apache.http.NameValuePair;
+import org.apache.http.client.utils.URLEncodedUtils;
+
 import java.io.InputStream;
+import java.net.URI;
+import java.nio.charset.Charset;
+import java.util.List;
 import java.util.Map;
 
 public class Request {
     private final String method;
-    private final String path;
+    private final String fullPath;
     private final Map<String, String> headers;
     private final InputStream body;
 
-    public Request(String method, String path, Map<String, String> headers, InputStream body) {
+    public Request(String method, String fullPath, Map<String, String> headers, InputStream body) {
         this.body = body;
         this.method = method;
-        this.path = path;
+        this.fullPath = fullPath;
         this.headers = headers;
     }
 
@@ -26,7 +32,17 @@ public class Request {
         return method;
     }
 
+    //Возвращаем только пкть без параметров
     public String getPath() {
-        return path;
+        return URI.create(fullPath).getPath();
+    }
+
+    public List<NameValuePair> getQueryParams() {
+        return URLEncodedUtils.parse(URI.create(fullPath), Charset.defaultCharset());
+    }
+
+    public List<NameValuePair> getQueryParam(String name) {
+        return getQueryParams().;
+        return URLEncodedUtils.parse(URI.create(fullPath), Charset.defaultCharset());
     }
 }

@@ -1,4 +1,6 @@
-import java.io.*;
+import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.HashMap;
@@ -57,7 +59,7 @@ public class Server {
             }
 
             final var method = parts[0];
-            final var path = parts[1];
+            final var fullPath = parts[1];
 
             Map<String, String> headers = new HashMap<>();
             String line;
@@ -67,11 +69,15 @@ public class Server {
                 headers.put(header[0], header[1]);
             }
 
-            Request request = new Request(method, path, headers, socket.getInputStream());
+            Request request = new Request(method, fullPath, headers, socket.getInputStream());
+
+            //логирование для проверки
+            System.out.println(request.getQueryParams());
+            //System.out.println(request.getQueryParam("last"));
 
             Handler handler = handlers
                     .getOrDefault(method, Map.of())
-                    .get(path);
+                    .get(request.getPath()); //Для хендлера получаем не полный путь а "урезанный" в методе getPath класса Request
 
             if (handler == null) {
                 out.write((
