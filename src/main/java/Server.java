@@ -73,24 +73,24 @@ public class Server {
 
             //логирование для проверки
             System.out.println(request.getQueryParams());
-            //System.out.println(request.getQueryParam("last"));
+            System.out.println(request.getQueryParam("last"));
 
             Handler handler = handlers
                     .getOrDefault(method, Map.of())
                     .get(request.getPath()); //Для хендлера получаем не полный путь а "урезанный" в методе getPath класса Request
 
             if (handler == null) {
-                out.write((
+                        out.write((
                         "HTTP/1.1 404 Not Found\r\n" +
                                 "Content-Length: 0\r\n" +
                                 "Connection: close\r\n" +
                                 "\r\n"
                 ).getBytes());
-                out.flush();
+                //out.flush();
+            } else {
+                Response response = new Response(out);
+                handler.handle(request, response);
             }
-
-            Response response = new Response(out);
-            handler.handle(request, response);
 
             out.flush();
 
